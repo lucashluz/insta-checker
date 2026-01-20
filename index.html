@@ -1,73 +1,3 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analisador de Seguidores Instagram</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f4f4; color: #333; }
-        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { color: #E1306C; text-align: center; }
-        .upload-area { margin-bottom: 20px; padding: 20px; border: 2px dashed #ddd; border-radius: 8px; text-align: center; }
-        .upload-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; }
-        button { background-color: #405DE6; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 4px; cursor: pointer; width: 100%; transition: background 0.3s; }
-        button:hover { background-color: #3045b0; }
-        #results { margin-top: 30px; display: none; }
-        .stat-box { display: flex; justify-content: space-around; margin-bottom: 20px; }
-        .stat { text-align: center; }
-        .stat-number { font-size: 24px; font-weight: bold; color: #E1306C; }
-        ul { list-style-type: none; padding: 0; max-height: 400px; overflow-y: auto; border: 1px solid #eee; }
-        li { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        li:last-child { border-bottom: none; }
-        a { color: #0095f6; text-decoration: none; }
-        .alert { background: #fff3cd; color: #856404; padding: 10px; border-radius: 4px; margin-bottom: 20px; font-size: 0.9em; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h1>🕵️ Analisador de Unfollow</h1>
-    
-    <div class="alert">
-        🔒 <strong>Segurança:</strong> Seus arquivos são processados apenas no seu navegador. Nada é enviado para servidores externos.
-    </div>
-
-    <div class="upload-area">
-        <div class="upload-group">
-            <label for="followersFile">Arquivo de SEGUIDORES (followers_1.json)</label>
-            <input type="file" id="followersFile" accept=".json">
-        </div>
-        
-        <div class="upload-group">
-            <label for="followingFile">Arquivo de SEGUINDO (following.json)</label>
-            <input type="file" id="followingFile" accept=".json">
-        </div>
-
-        <button onclick="processarArquivos()">Analisar Conexões</button>
-    </div>
-
-    <div id="results">
-        <div class="stat-box">
-            <div class="stat">
-                <div class="stat-number" id="countFollowers">0</div>
-                <div>Te Seguem</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number" id="countFollowing">0</div>
-                <div>Você Segue</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number" id="countNotBack">0</div>
-                <div>Não seguem de volta</div>
-            </div>
-        </div>
-
-        <h3>🚫 Quem não te segue de volta:</h3>
-        <ul id="listNotBack"></ul>
-    </div>
-</div>
-
 <script>
     async function lerJson(file) {
         return new Promise((resolve, reject) => {
@@ -80,17 +10,35 @@
 
     function extrairUsuarios(data) {
         const users = new Set();
-        // Tenta pegar a lista, lidando com diferentes estruturas do JSON do Instagram
-        const lista = data.relationships_following || data; 
-        
-        // Verifica se é um array direto ou se está aninhado
-        if (Array.isArray(lista)) {
-            lista.forEach(item => {
-                if (item.string_list_data && item.string_list_data[0]) {
-                    users.add(item.string_list_data[0].value);
-                }
-            });
+        let lista = [];
+
+        // LÓGICA DE DETECÇÃO AUTOMÁTICA DA LISTA
+        // 1. Caso 'following.json': está dentro de "relationships_following"
+        if (data.relationships_following) {
+            lista = data.relationships_following;
+        } 
+        // 2. Caso 'followers_1.json': geralmente é um array direto na raiz do arquivo
+        else if (Array.isArray(data)) {
+            lista = data;
         }
+        // 3. Caso alternativo (alguns exports antigos): "relationships_followers"
+        else if (data.relationships_followers) {
+            lista = data.relationships_followers;
+        }
+
+        // PROCESSAMENTO DOS DADOS
+        lista.forEach(item => {
+            try {
+                // A estrutura padrão é string_list_data[0].value
+                if (item.string_list_data && item.string_list_data.length > 0) {
+                    const username = item.string_list_data[0].value;
+                    users.add(username);
+                }
+            } catch (e) {
+                console.warn("Item ignorado por formato inesperado:", item);
+            }
+        });
+
         return users;
     }
 
@@ -110,6 +58,7 @@
             const seguidores = extrairUsuarios(followersData);
             const seguindo = extrairUsuarios(followingData);
 
+            // Quem eu sigo (seguindo) mas NÃO está na lista de quem me segue (seguidores)
             const naoSeguemDeVolta = [];
             seguindo.forEach(user => {
                 if (!seguidores.has(user)) {
@@ -125,7 +74,8 @@
             const ul = document.getElementById('listNotBack');
             ul.innerHTML = '';
             
-            naoSeguemDeVolta.forEach(user => {
+            // Ordenar alfabeticamente para facilitar a leitura
+            naoSeguemDeVolta.sort().forEach(user => {
                 const li = document.createElement('li');
                 li.innerHTML = `
                     <strong>${user}</strong>
@@ -138,10 +88,7 @@
 
         } catch (error) {
             console.error(error);
-            alert("Erro ao ler os arquivos. Verifique se são JSONs válidos do Instagram.");
+            alert("Ocorreu um erro. Verifique o console (F12) para detalhes.");
         }
     }
 </script>
-
-</body>
-</html>
