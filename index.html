@@ -9,43 +9,58 @@
         .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         h1 { color: #E1306C; text-align: center; }
         .upload-area { margin-bottom: 20px; padding: 20px; border: 2px dashed #ddd; border-radius: 8px; text-align: center; }
-        .upload-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; }
-        button { background-color: #405DE6; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 4px; cursor: pointer; width: 100%; transition: background 0.3s; }
+        .upload-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 1.1em; }
+        input[type="file"] { display: block; width: 100%; margin-bottom: 5px; }
+        .file-status { font-size: 0.9em; color: #28a745; font-weight: bold; display: none; margin-top: 5px; }
+        
+        button { background-color: #405DE6; color: white; border: none; padding: 15px 24px; font-size: 18px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; transition: background 0.3s; margin-top: 10px; }
         button:hover { background-color: #3045b0; }
-        #results { margin-top: 30px; display: none; }
-        .stat-box { display: flex; justify-content: space-around; margin-bottom: 20px; }
-        .stat { text-align: center; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        #results { margin-top: 30px; display: none; border-top: 2px solid #eee; padding-top: 20px; }
+        .stat-box { display: flex; justify-content: space-around; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .stat { text-align: center; background: #f9f9f9; padding: 15px; border-radius: 8px; min-width: 100px; }
         .stat-number { font-size: 24px; font-weight: bold; color: #E1306C; }
-        ul { list-style-type: none; padding: 0; max-height: 400px; overflow-y: auto; border: 1px solid #eee; }
-        li { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        li:last-child { border-bottom: none; }
-        a { color: #0095f6; text-decoration: none; }
-        .alert { background: #fff3cd; color: #856404; padding: 10px; border-radius: 4px; margin-bottom: 20px; font-size: 0.9em; }
+        
+        ul { list-style-type: none; padding: 0; max-height: 500px; overflow-y: auto; border: 1px solid #eee; background: #fff; }
+        li { padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        li:hover { background-color: #fcfcfc; }
+        a { color: #0095f6; text-decoration: none; font-weight: bold; }
+        
+        .debug-box { background: #333; color: #0f0; padding: 15px; border-radius: 5px; margin-top: 20px; font-family: monospace; font-size: 12px; display: none; overflow-x: auto; }
+        .alert { background: #e2e3e5; color: #383d41; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-size: 0.9em; border-left: 5px solid #E1306C; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🕵️ Analisador de Unfollow</h1>
+    <h1>🕵️ Analisador de Unfollow v2.0</h1>
     
     <div class="alert">
-        🔒 <strong>Segurança:</strong> Seus arquivos são processados apenas no seu navegador. Nada é enviado para servidores externos.
+        <strong>Instruções:</strong><br>
+        1. Selecione o arquivo <code>followers_1.json</code> (Seguidores)<br>
+        2. Selecione o arquivo <code>following.json</code> (Seguindo)<br>
+        3. Clique em Analisar.
     </div>
 
     <div class="upload-area">
         <div class="upload-group">
-            <label for="followersFile">Arquivo de SEGUIDORES (followers_1.json)</label>
-            <input type="file" id="followersFile" accept=".json">
+            <label for="followersFile">📂 Arquivo de SEGUIDORES</label>
+            <input type="file" id="followersFile" accept=".json" onchange="updateStatus(this, 'statusFollowers')">
+            <div id="statusFollowers" class="file-status">✅ Arquivo carregado</div>
         </div>
         
         <div class="upload-group">
-            <label for="followingFile">Arquivo de SEGUINDO (following.json)</label>
-            <input type="file" id="followingFile" accept=".json">
+            <label for="followingFile">📂 Arquivo de SEGUINDO</label>
+            <input type="file" id="followingFile" accept=".json" onchange="updateStatus(this, 'statusFollowing')">
+            <div id="statusFollowing" class="file-status">✅ Arquivo carregado</div>
         </div>
 
-        <button onclick="processarArquivos()">Analisar Conexões</button>
+        <button onclick="processarArquivos()" id="btnAnalisar">Analisar Conexões</button>
     </div>
+
+    <div id="debugArea" class="debug-box"></div>
 
     <div id="results">
         <div class="stat-box">
@@ -64,48 +79,87 @@
         </div>
 
         <h3>🚫 Quem não te segue de volta:</h3>
+        <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Clique em "Ver Perfil" para confirmar.</p>
         <ul id="listNotBack"></ul>
     </div>
 </div>
 
 <script>
+    // Função visual para mostrar que o arquivo foi carregado
+    function updateStatus(input, statusId) {
+        const statusElement = document.getElementById(statusId);
+        if (input.files && input.files[0]) {
+            statusElement.innerText = "✅ " + input.files[0].name;
+            statusElement.style.display = "block";
+        }
+    }
+
     async function lerJson(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = event => resolve(JSON.parse(event.target.result));
+            reader.onload = event => {
+                try {
+                    const json = JSON.parse(event.target.result);
+                    resolve(json);
+                } catch (e) {
+                    reject("Erro ao ler JSON: " + e.message);
+                }
+            };
             reader.onerror = error => reject(error);
             reader.readAsText(file);
         });
     }
 
-    function extrairUsuarios(data) {
+    function logDebug(msg) {
+        const debug = document.getElementById('debugArea');
+        debug.style.display = 'block';
+        debug.innerText += msg + "\n";
+        console.log(msg);
+    }
+
+    function encontrarListaUsuarios(data, nomeArquivo) {
+        // Tenta achar onde está o array de usuários
+        if (Array.isArray(data)) return data; // followers_1.json geralmente é assim direto
+        if (data.relationships_following) return data.relationships_following;
+        if (data.relationships_followers) return data.relationships_followers;
+        
+        // Se não achou nos locais padrão, varre o objeto
+        for (let key in data) {
+            if (Array.isArray(data[key])) {
+                return data[key];
+            }
+        }
+        return [];
+    }
+
+    function extrairUsuarios(data, nomeArquivo) {
         const users = new Set();
-        let lista = [];
+        const lista = encontrarListaUsuarios(data, nomeArquivo);
 
-        // LÓGICA DE DETECÇÃO AUTOMÁTICA DA LISTA
-        // 1. Caso 'following.json': está dentro de "relationships_following"
-        if (data.relationships_following) {
-            lista = data.relationships_following;
-        } 
-        // 2. Caso 'followers_1.json': geralmente é um array direto na raiz do arquivo
-        else if (Array.isArray(data)) {
-            lista = data;
-        }
-        // 3. Caso alternativo (alguns exports antigos): "relationships_followers"
-        else if (data.relationships_followers) {
-            lista = data.relationships_followers;
+        logDebug(`[${nomeArquivo}] Estrutura encontrada. Total de itens: ${lista.length}`);
+
+        if (lista.length > 0) {
+            // DEBUG: Mostra o primeiro item para entendermos a estrutura se der erro
+            logDebug(`[${nomeArquivo}] Exemplo do primeiro item: ${JSON.stringify(lista[0]).substring(0, 150)}...`);
         }
 
-        // PROCESSAMENTO DOS DADOS
         lista.forEach(item => {
+            let username = null;
+
+            // Tenta pegar o username em váriose locais possíveis
             try {
-                // A estrutura padrão é string_list_data[0].value
-                if (item.string_list_data && item.string_list_data.length > 0) {
-                    const username = item.string_list_data[0].value;
-                    users.add(username);
+                if (item.string_list_data && item.string_list_data[0]) {
+                    username = item.string_list_data[0].value;
+                } else if (item.title) {
+                    username = item.title;
+                } else if (item.value) {
+                    username = item.value;
                 }
-            } catch (e) {
-                console.warn("Item ignorado por formato inesperado:", item);
+            } catch(e) { return; }
+
+            if (username) {
+                // Importante: converter para minúsculo para evitar erros de comparação
+                users.add(username.toLowerCase()); 
             }
         });
 
@@ -115,9 +169,13 @@
     async function processarArquivos() {
         const followersInput = document.getElementById('followersFile');
         const followingInput = document.getElementById('followingFile');
+        const debugArea = document.getElementById('debugArea');
+        
+        // Limpa debug anterior
+        debugArea.innerText = "INICIANDO DEBUG...\n";
 
         if (!followersInput.files[0] || !followingInput.files[0]) {
-            alert("Por favor, selecione os dois arquivos JSON.");
+            alert("⚠️ Por favor, selecione os dois arquivos antes de clicar em Analisar.");
             return;
         }
 
@@ -125,10 +183,17 @@
             const followersData = await lerJson(followersInput.files[0]);
             const followingData = await lerJson(followingInput.files[0]);
 
-            const seguidores = extrairUsuarios(followersData);
-            const seguindo = extrairUsuarios(followingData);
+            const seguidores = extrairUsuarios(followersData, 'SEGUIDORES');
+            const seguindo = extrairUsuarios(followingData, 'SEGUINDO');
 
-            // Quem eu sigo (seguindo) mas NÃO está na lista de quem me segue (seguidores)
+            logDebug(`[RESUMO] Extraídos: ${seguidores.size} seguidores e ${seguindo.size} seguidos.`);
+
+            if (seguidores.size === 0 || seguindo.size === 0) {
+                alert("ERRO: Não consegui encontrar usuários em um dos arquivos. Veja a caixa preta de Debug abaixo.");
+                return;
+            }
+
+            // Lógica de Comparação
             const naoSeguemDeVolta = [];
             seguindo.forEach(user => {
                 if (!seguidores.has(user)) {
@@ -144,7 +209,6 @@
             const ul = document.getElementById('listNotBack');
             ul.innerHTML = '';
             
-            // Ordenar alfabeticamente para facilitar a leitura
             naoSeguemDeVolta.sort().forEach(user => {
                 const li = document.createElement('li');
                 li.innerHTML = `
@@ -158,7 +222,7 @@
 
         } catch (error) {
             console.error(error);
-            alert("Ocorreu um erro. Verifique o console (F12) para detalhes.");
+            alert("Erro fatal no processamento: " + error.message);
         }
     }
 </script>
