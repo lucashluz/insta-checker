@@ -18,8 +18,10 @@
         .step-number { background: #E1306C; color: white; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; font-size: 0.9em; margin-right: 10px; flex-shrink: 0; font-weight: bold;}
         
         /* Tutorial Box */
-        .tutorial-list { font-size: 0.95em; color: #444; line-height: 1.5; padding-left: 10px; }
-        .tutorial-list li { margin-bottom: 8px; }
+        .tutorial-list { font-size: 0.95em; color: #444; line-height: 1.6; padding-left: 5px; }
+        .tutorial-item { margin-bottom: 10px; display: flex; align-items: flex-start; }
+        .tutorial-bullet { margin-right: 8px; color: #E1306C; font-weight: bold; }
+        
         .config-card { background: #f0f2f5; border-left: 4px solid #E1306C; padding: 15px; border-radius: 4px; margin: 15px 0; font-size: 0.9em; }
         .config-item { display: flex; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px solid #ddd; padding-bottom: 6px;}
         .config-item:last-child { border: none; margin: 0; padding: 0; }
@@ -64,40 +66,57 @@
         <div class="step-title"><span class="step-number">1</span> Solicite seus dados no Instagram</div>
         
         <div class="tutorial-list">
-            1. Toque no botão abaixo para abrir a Central de Contas.<br>
-            2. Escolha <strong>"Baixar ou transferir informações"</strong>.<br>
-            3. Selecione <strong>"Algumas de suas informações"</strong>.<br>
-            4. Role para baixo até a categoria <strong>Conexões</strong> e marque apenas <strong>"Seguidores e seguindo"</strong>.<br>
-            5. Avance e configure EXATAMENTE assim:
+            <div class="tutorial-item">
+                <span class="tutorial-bullet">1.</span>
+                <span>Toque no botão abaixo para abrir a Central de Contas.</span>
+            </div>
+            <div class="tutorial-item">
+                <span class="tutorial-bullet">2.</span>
+                <span>Selecione seu perfil e toque em <strong>"Baixar ou transferir informações"</strong> (ou Criar exportação).</span>
+            </div>
+            <div class="tutorial-item">
+                <span class="tutorial-bullet">3.</span>
+                <span>Escolha <strong>"Algumas de suas informações"</strong> (não baixe tudo!).</span>
+            </div>
+            <div class="tutorial-item">
+                <span class="tutorial-bullet">4.</span>
+                <span>Role até <strong>Conexões</strong>, marque apenas <strong>"Seguidores e seguindo"</strong> e avance.</span>
+            </div>
+            <div class="tutorial-item">
+                <span class="tutorial-bullet">5.</span>
+                <span>Selecione <strong>"Baixar no dispositivo"</strong> e configure assim:</span>
+            </div>
         </div>
 
         <div class="config-card">
-            <div class="config-item">
-                <span class="config-label">Destino:</span>
-                <span class="config-value">Baixar no dispositivo</span>
-            </div>
             <div class="config-item">
                 <span class="config-label">Intervalo de datas:</span>
                 <span class="config-value">Desde o início</span>
             </div>
             <div class="config-item">
+                <span class="config-label">Notificar no email:</span>
+                <span class="config-value">(Seu email)</span>
+            </div>
+            <div class="config-item">
                 <span class="config-label">Formato:</span>
-                <span class="config-value" style="color:#E1306C">JSON (Não HTML)</span>
+                <span class="config-value" style="color:#E1306C">JSON (IMPORTANTE)</span>
             </div>
         </div>
+
+        <p style="font-size: 0.85em; color: #666; text-align: center; margin-bottom: 10px;">Toque em <strong>Criar Arquivos</strong> e aguarde o email do Instagram.</p>
 
         <a href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" class="btn-insta">↗️ Abrir Instagram e Solicitar</a>
     </div>
 
     <div class="step">
         <div class="step-title"><span class="step-number">2</span> Envie o arquivo recebido</div>
-        <p style="font-size: 0.9em; color: #555; margin-bottom: 15px;">O Instagram te enviará um email. Baixe o arquivo (ZIP) e envie ele aqui <strong>sem descompactar</strong>.</p>
+        <p style="font-size: 0.9em; color: #555; margin-bottom: 15px;">Quando o arquivo chegar, baixe-o e envie o <strong>ZIP completo</strong> aqui (não precisa extrair).</p>
         
         <div class="upload-zone">
             <p>📂 Toque aqui para enviar o arquivo .ZIP</p>
             <input type="file" id="zipFile" accept=".zip" onchange="handleZipUpload(this)">
         </div>
-        <div id="loading" class="loading">🔍 Lendo arquivo ZIP...</div>
+        <div id="loading" class="loading">🔍 Procurando lista de seguidores no ZIP...</div>
         <div id="errorMsg" class="error-msg"></div>
     </div>
 
@@ -124,7 +143,7 @@
 </div>
 
 <script>
-    // --- Lógica JSZip e Processamento ---
+    // --- Funções de Processamento (Intactas) ---
 
     function encontrarListaUsuarios(data) {
         if (Array.isArray(data)) return data;
@@ -142,7 +161,6 @@
         
         lista.forEach(item => {
             let username = null;
-            // Tenta achar o username nas estruturas conhecidas
             if (item.string_list_data && item.string_list_data[0] && item.string_list_data[0].value) {
                 username = item.string_list_data[0].value;
             } else if (item.title) {
@@ -170,18 +188,21 @@
             let followersContent = null;
             let followingContent = null;
 
-            // Busca flexível dentro do ZIP
+            // Lógica de "Ímã": Ignora fotos e arquivos inúteis, foca só nos JSONs
             for (const [filename, fileData] of Object.entries(zipContent.files)) {
+                // Procura arquivo com nome de seguidores
                 if (filename.includes('followers_1.json') || filename.includes('followers.json')) {
                     followersContent = await fileData.async('string');
                 }
+                // Procura arquivo com nome de seguindo
                 if (filename.includes('following.json')) {
                     followingContent = await fileData.async('string');
                 }
             }
 
+            // Validação
             if (!followersContent || !followingContent) {
-                throw new Error("Arquivos não encontrados no ZIP. Certifique-se de ter escolhido formato JSON no Instagram.");
+                throw new Error("Não encontrei os arquivos de seguidores. Verifique se selecionou formato JSON e marcou 'Seguidores e seguindo' no Instagram.");
             }
 
             const followersJson = JSON.parse(followersContent);
@@ -197,7 +218,7 @@
                 }
             });
 
-            // Atualiza Interface
+            // Renderização
             document.getElementById('numFollowers').innerText = seguidores.size;
             document.getElementById('numFollowing').innerText = seguindo.size;
             document.getElementById('numNotBack').innerText = naoSeguemDeVolta.length;
