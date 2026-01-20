@@ -35,7 +35,7 @@
 <body>
 
 <div class="container">
-    <h1>🕵️ Analisador de Unfollow v2.0</h1>
+    <h1>🕵️ Analisador de Unfollow v3.0 (Fixed)</h1>
     
     <div class="alert">
         <strong>Instruções:</strong><br>
@@ -79,13 +79,11 @@
         </div>
 
         <h3>🚫 Quem não te segue de volta:</h3>
-        <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Clique em "Ver Perfil" para confirmar.</p>
         <ul id="listNotBack"></ul>
     </div>
 </div>
 
 <script>
-    // Função visual para mostrar que o arquivo foi carregado
     function updateStatus(input, statusId) {
         const statusElement = document.getElementById(statusId);
         if (input.files && input.files[0]) {
@@ -99,8 +97,7 @@
             const reader = new FileReader();
             reader.onload = event => {
                 try {
-                    const json = JSON.parse(event.target.result);
-                    resolve(json);
+                    resolve(JSON.parse(event.target.result));
                 } catch (e) {
                     reject("Erro ao ler JSON: " + e.message);
                 }
@@ -117,49 +114,44 @@
         console.log(msg);
     }
 
-    function encontrarListaUsuarios(data, nomeArquivo) {
-        // Tenta achar onde está o array de usuários
-        if (Array.isArray(data)) return data; // followers_1.json geralmente é assim direto
+    function encontrarListaUsuarios(data) {
+        if (Array.isArray(data)) return data;
         if (data.relationships_following) return data.relationships_following;
         if (data.relationships_followers) return data.relationships_followers;
-        
-        // Se não achou nos locais padrão, varre o objeto
         for (let key in data) {
-            if (Array.isArray(data[key])) {
-                return data[key];
-            }
+            if (Array.isArray(data[key])) return data[key];
         }
         return [];
     }
 
     function extrairUsuarios(data, nomeArquivo) {
         const users = new Set();
-        const lista = encontrarListaUsuarios(data, nomeArquivo);
+        const lista = encontrarListaUsuarios(data);
 
-        logDebug(`[${nomeArquivo}] Estrutura encontrada. Total de itens: ${lista.length}`);
-
-        if (lista.length > 0) {
-            // DEBUG: Mostra o primeiro item para entendermos a estrutura se der erro
-            logDebug(`[${nomeArquivo}] Exemplo do primeiro item: ${JSON.stringify(lista[0]).substring(0, 150)}...`);
-        }
+        logDebug(`[${nomeArquivo}] Itens brutos encontrados: ${lista.length}`);
 
         lista.forEach(item => {
             let username = null;
 
-            // Tenta pegar o username em váriose locais possíveis
-            try {
-                if (item.string_list_data && item.string_list_data[0]) {
-                    username = item.string_list_data[0].value;
-                } else if (item.title) {
-                    username = item.title;
-                } else if (item.value) {
-                    username = item.value;
-                }
-            } catch(e) { return; }
+            // Lógica de Prioridade "Cascata"
+            
+            // 1. Tenta pegar pelo value dentro do array (Padrão Followers)
+            if (item.string_list_data && item.string_list_data[0] && item.string_list_data[0].value) {
+                username = item.string_list_data[0].value;
+            }
+            
+            // 2. SE falhou acima, tenta pegar pelo Title (Padrão Following que vimos no debug)
+            if (!username && item.title) {
+                username = item.title;
+            }
+            
+            // 3. SE falhou, tenta value direto
+            if (!username && item.value) {
+                username = item.value;
+            }
 
             if (username) {
-                // Importante: converter para minúsculo para evitar erros de comparação
-                users.add(username.toLowerCase()); 
+                users.add(username.toLowerCase());
             }
         });
 
@@ -171,11 +163,10 @@
         const followingInput = document.getElementById('followingFile');
         const debugArea = document.getElementById('debugArea');
         
-        // Limpa debug anterior
-        debugArea.innerText = "INICIANDO DEBUG...\n";
+        debugArea.innerText = "INICIANDO...\n";
 
         if (!followersInput.files[0] || !followingInput.files[0]) {
-            alert("⚠️ Por favor, selecione os dois arquivos antes de clicar em Analisar.");
+            alert("⚠️ Selecione os dois arquivos JSON.");
             return;
         }
 
@@ -186,14 +177,8 @@
             const seguidores = extrairUsuarios(followersData, 'SEGUIDORES');
             const seguindo = extrairUsuarios(followingData, 'SEGUINDO');
 
-            logDebug(`[RESUMO] Extraídos: ${seguidores.size} seguidores e ${seguindo.size} seguidos.`);
+            logDebug(`[FINAL] Extraídos: ${seguidores.size} seguidores / ${seguindo.size} seguindo.`);
 
-            if (seguidores.size === 0 || seguindo.size === 0) {
-                alert("ERRO: Não consegui encontrar usuários em um dos arquivos. Veja a caixa preta de Debug abaixo.");
-                return;
-            }
-
-            // Lógica de Comparação
             const naoSeguemDeVolta = [];
             seguindo.forEach(user => {
                 if (!seguidores.has(user)) {
@@ -201,7 +186,6 @@
                 }
             });
 
-            // Atualizar UI
             document.getElementById('countFollowers').textContent = seguidores.size;
             document.getElementById('countFollowing').textContent = seguindo.size;
             document.getElementById('countNotBack').textContent = naoSeguemDeVolta.length;
@@ -222,7 +206,7 @@
 
         } catch (error) {
             console.error(error);
-            alert("Erro fatal no processamento: " + error.message);
+            alert("Erro: " + error.message);
         }
     }
 </script>
