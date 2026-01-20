@@ -19,17 +19,18 @@
         
         /* Tutorial Box */
         .tutorial-list { font-size: 0.95em; color: #444; line-height: 1.6; padding-left: 5px; }
-        .tutorial-item { margin-bottom: 10px; display: flex; align-items: flex-start; }
-        .tutorial-bullet { margin-right: 8px; color: #E1306C; font-weight: bold; }
+        .tutorial-item { margin-bottom: 12px; display: flex; align-items: flex-start; }
+        .tutorial-bullet { margin-right: 8px; color: #E1306C; font-weight: bold; min-width: 15px; }
         
-        .config-card { background: #f0f2f5; border-left: 4px solid #E1306C; padding: 15px; border-radius: 4px; margin: 15px 0; font-size: 0.9em; }
-        .config-item { display: flex; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px solid #ddd; padding-bottom: 6px;}
-        .config-item:last-child { border: none; margin: 0; padding: 0; }
-        .config-label { color: #666; }
-        .config-value { font-weight: bold; color: #000; }
+        /* Config Card (Para o Passo 5) */
+        .config-card { background: #f0f2f5; border-left: 4px solid #E1306C; padding: 15px; border-radius: 4px; margin: 10px 0 15px 25px; font-size: 0.9em; }
+        .config-subitem { margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+        .config-subitem:last-child { border: none; margin: 0; padding: 0; }
+        .config-label { font-weight: bold; color: #333; display: block; margin-bottom: 4px; }
+        .config-desc { color: #666; font-size: 0.95em; }
         
         /* Botão Link Direto */
-        .btn-insta { display: block; width: 100%; text-align: center; background: #E1306C; color: white; text-decoration: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 1em; margin-top: 15px; transition: 0.2s; box-sizing: border-box; }
+        .btn-insta { display: block; width: 100%; text-align: center; background: #E1306C; color: white; text-decoration: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 1em; margin-top: 20px; transition: 0.2s; box-sizing: border-box; }
         .btn-insta:hover { background: #c1275c; }
 
         /* Área de Upload Unificada */
@@ -68,49 +69,56 @@
         <div class="tutorial-list">
             <div class="tutorial-item">
                 <span class="tutorial-bullet">1.</span>
-                <span>Toque no botão abaixo para abrir a Central de Contas.</span>
+                <span>Toque no botão abaixo para abrir a Central de Contas Meta.</span>
             </div>
             <div class="tutorial-item">
                 <span class="tutorial-bullet">2.</span>
-                <span>Selecione seu perfil e toque em <strong>"Baixar ou transferir informações"</strong> (ou Criar exportação).</span>
+                <span>Clique em <strong>"Criar exportação"</strong> (ou Baixar suas informações).</span>
             </div>
             <div class="tutorial-item">
                 <span class="tutorial-bullet">3.</span>
-                <span>Escolha <strong>"Algumas de suas informações"</strong> (não baixe tudo!).</span>
+                <span>Selecione seu perfil do Instagram.</span>
             </div>
             <div class="tutorial-item">
                 <span class="tutorial-bullet">4.</span>
-                <span>Role até <strong>Conexões</strong>, marque apenas <strong>"Seguidores e seguindo"</strong> e avance.</span>
+                <span>Selecione a opção <strong>"Exportar para o dispositivo"</strong>.</span>
             </div>
             <div class="tutorial-item">
                 <span class="tutorial-bullet">5.</span>
-                <span>Selecione <strong>"Baixar no dispositivo"</strong> e configure assim:</span>
+                <span>Configure os detalhes:</span>
+            </div>
+
+            <div class="config-card">
+                <div class="config-subitem">
+                    <span class="config-label">A) Personalizar informações:</span>
+                    <span class="config-desc">Limpe tudo, entre em "Conexões" e marque apenas <strong>Seguidores e seguindo</strong>. Salve.</span>
+                </div>
+                <div class="config-subitem">
+                    <span class="config-label">B) Intervalo de datas:</span>
+                    <span class="config-desc">Escolha <strong>Desde o início</strong> e salve.</span>
+                </div>
+                <div class="config-subitem">
+                    <span class="config-label">C) Formato:</span>
+                    <span class="config-desc" style="color:#E1306C; font-weight:bold;">Altere de HTML para JSON. (Importante!)</span>
+                </div>
+            </div>
+
+            <div class="tutorial-item">
+                <span class="tutorial-bullet">6.</span>
+                <span>Clique em <strong>"Criar arquivos"</strong> e aguarde.</span>
+            </div>
+            <div class="tutorial-item">
+                <span class="tutorial-bullet">7.</span>
+                <span>Quando a exportação for concluída, faça o download do arquivo e envie no passo seguinte.</span>
             </div>
         </div>
-
-        <div class="config-card">
-            <div class="config-item">
-                <span class="config-label">Intervalo de datas:</span>
-                <span class="config-value">Desde o início</span>
-            </div>
-            <div class="config-item">
-                <span class="config-label">Notificar no email:</span>
-                <span class="config-value">(Seu email)</span>
-            </div>
-            <div class="config-item">
-                <span class="config-label">Formato:</span>
-                <span class="config-value" style="color:#E1306C">JSON (IMPORTANTE)</span>
-            </div>
-        </div>
-
-        <p style="font-size: 0.85em; color: #666; text-align: center; margin-bottom: 10px;">Toque em <strong>Criar Arquivos</strong> e aguarde o email do Instagram.</p>
 
         <a href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" class="btn-insta">↗️ Abrir Instagram e Solicitar</a>
     </div>
 
     <div class="step">
         <div class="step-title"><span class="step-number">2</span> Envie o arquivo recebido</div>
-        <p style="font-size: 0.9em; color: #555; margin-bottom: 15px;">Quando o arquivo chegar, baixe-o e envie o <strong>ZIP completo</strong> aqui (não precisa extrair).</p>
+        <p style="font-size: 0.9em; color: #555; margin-bottom: 15px;">Baixe o arquivo (ZIP) que o Instagram enviou e coloque ele aqui.</p>
         
         <div class="upload-zone">
             <p>📂 Toque aqui para enviar o arquivo .ZIP</p>
@@ -143,7 +151,7 @@
 </div>
 
 <script>
-    // --- Funções de Processamento (Intactas) ---
+    // --- Lógica de Processamento ---
 
     function encontrarListaUsuarios(data) {
         if (Array.isArray(data)) return data;
@@ -188,21 +196,18 @@
             let followersContent = null;
             let followingContent = null;
 
-            // Lógica de "Ímã": Ignora fotos e arquivos inúteis, foca só nos JSONs
+            // Busca flexível dentro do ZIP
             for (const [filename, fileData] of Object.entries(zipContent.files)) {
-                // Procura arquivo com nome de seguidores
                 if (filename.includes('followers_1.json') || filename.includes('followers.json')) {
                     followersContent = await fileData.async('string');
                 }
-                // Procura arquivo com nome de seguindo
                 if (filename.includes('following.json')) {
                     followingContent = await fileData.async('string');
                 }
             }
 
-            // Validação
             if (!followersContent || !followingContent) {
-                throw new Error("Não encontrei os arquivos de seguidores. Verifique se selecionou formato JSON e marcou 'Seguidores e seguindo' no Instagram.");
+                throw new Error("Arquivos não encontrados. Verifique se no Passo 5 (Letra C) você mudou para JSON.");
             }
 
             const followersJson = JSON.parse(followersContent);
