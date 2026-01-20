@@ -2,117 +2,129 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analisador de Seguidores Instagram</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Analisador Instagram - Modo Fácil</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f4f4; color: #333; }
-        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { color: #E1306C; text-align: center; }
-        .upload-area { margin-bottom: 20px; padding: 20px; border: 2px dashed #ddd; border-radius: 8px; text-align: center; }
-        .upload-group { margin-bottom: 20px; text-align: left; }
-        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 1.1em; }
-        input[type="file"] { display: block; width: 100%; margin-bottom: 5px; }
-        .file-status { font-size: 0.9em; color: #28a745; font-weight: bold; display: none; margin-top: 5px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fafafa; color: #262626; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h1 { color: #E1306C; margin-bottom: 5px; font-size: 1.8em; text-align: center; }
+        .subtitle { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 30px; }
         
-        button { background-color: #405DE6; color: white; border: none; padding: 15px 24px; font-size: 18px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; transition: background 0.3s; margin-top: 10px; }
-        button:hover { background-color: #3045b0; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        /* Estilo dos Passos */
+        .step { margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 25px; }
+        .step:last-child { border: none; }
+        .step-title { font-weight: 800; font-size: 1.1em; margin-bottom: 15px; display: flex; align-items: center; color: #262626; }
+        .step-number { background: #E1306C; color: white; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; font-size: 0.9em; margin-right: 10px; flex-shrink: 0; font-weight: bold;}
+        
+        /* Tutorial Box */
+        .tutorial-list { font-size: 0.95em; color: #444; line-height: 1.5; padding-left: 10px; }
+        .tutorial-list li { margin-bottom: 8px; }
+        .config-card { background: #f0f2f5; border-left: 4px solid #E1306C; padding: 15px; border-radius: 4px; margin: 15px 0; font-size: 0.9em; }
+        .config-item { display: flex; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px solid #ddd; padding-bottom: 6px;}
+        .config-item:last-child { border: none; margin: 0; padding: 0; }
+        .config-label { color: #666; }
+        .config-value { font-weight: bold; color: #000; }
+        
+        /* Botão Link Direto */
+        .btn-insta { display: block; width: 100%; text-align: center; background: #E1306C; color: white; text-decoration: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 1em; margin-top: 15px; transition: 0.2s; box-sizing: border-box; }
+        .btn-insta:hover { background: #c1275c; }
 
-        #results { margin-top: 30px; display: none; border-top: 2px solid #eee; padding-top: 20px; }
-        .stat-box { display: flex; justify-content: space-around; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-        .stat { text-align: center; background: #f9f9f9; padding: 15px; border-radius: 8px; min-width: 100px; }
-        .stat-number { font-size: 24px; font-weight: bold; color: #E1306C; }
+        /* Área de Upload Unificada */
+        .upload-zone { border: 2px dashed #ccc; background: #fff; border-radius: 10px; padding: 40px 20px; cursor: pointer; transition: 0.3s; position: relative; text-align: center; }
+        .upload-zone:hover { border-color: #E1306C; background: #fff5f8; }
+        .upload-zone p { margin: 0; color: #666; font-weight: 600; }
+        .upload-zone input { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
+
+        /* Resultados */
+        #results { display: none; margin-top: 20px; animation: fadeIn 0.5s; }
+        .stats { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        .stat-card { background: #f8f8f8; padding: 15px 10px; border-radius: 8px; flex: 1; text-align: center; }
+        .stat-val { font-size: 1.5em; font-weight: 800; color: #E1306C; line-height: 1; }
+        .stat-label { font-size: 0.75em; color: #666; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        ul { list-style: none; padding: 0; text-align: left; max-height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
+        li { padding: 12px 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        li:hover { background-color: #f9f9f9; }
+        a.profile-link { color: #0095f6; text-decoration: none; font-weight: 600; font-size: 0.85em; background: #eef7ff; padding: 4px 10px; border-radius: 4px; }
+
+        .loading { display: none; color: #666; font-style: italic; margin-top: 10px; text-align: center; }
+        .error-msg { color: #d32f2f; background: #ffebee; padding: 10px; border-radius: 6px; font-size: 0.9em; display: none; margin-top: 10px; text-align: center; }
         
-        ul { list-style-type: none; padding: 0; max-height: 500px; overflow-y: auto; border: 1px solid #eee; background: #fff; }
-        li { padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        li:hover { background-color: #fcfcfc; }
-        a { color: #0095f6; text-decoration: none; font-weight: bold; }
-        
-        .debug-box { background: #333; color: #0f0; padding: 15px; border-radius: 5px; margin-top: 20px; font-family: monospace; font-size: 12px; display: none; overflow-x: auto; }
-        .alert { background: #e2e3e5; color: #383d41; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-size: 0.9em; border-left: 5px solid #E1306C; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🕵️ Analisador de Unfollow v3.0 (Fixed)</h1>
-    
-    <div class="alert">
-        <strong>Instruções:</strong><br>
-        1. Selecione o arquivo <code>followers_1.json</code> (Seguidores)<br>
-        2. Selecione o arquivo <code>following.json</code> (Seguindo)<br>
-        3. Clique em Analisar.
-    </div>
+    <h1>Analisador de Unfollow</h1>
+    <p class="subtitle">Descubra quem não te segue de volta de forma segura.</p>
 
-    <div class="upload-area">
-        <div class="upload-group">
-            <label for="followersFile">📂 Arquivo de SEGUIDORES</label>
-            <input type="file" id="followersFile" accept=".json" onchange="updateStatus(this, 'statusFollowers')">
-            <div id="statusFollowers" class="file-status">✅ Arquivo carregado</div>
-        </div>
+    <div class="step">
+        <div class="step-title"><span class="step-number">1</span> Solicite seus dados no Instagram</div>
         
-        <div class="upload-group">
-            <label for="followingFile">📂 Arquivo de SEGUINDO</label>
-            <input type="file" id="followingFile" accept=".json" onchange="updateStatus(this, 'statusFollowing')">
-            <div id="statusFollowing" class="file-status">✅ Arquivo carregado</div>
+        <div class="tutorial-list">
+            1. Toque no botão abaixo para abrir a Central de Contas.<br>
+            2. Escolha <strong>"Baixar ou transferir informações"</strong>.<br>
+            3. Selecione <strong>"Algumas de suas informações"</strong>.<br>
+            4. Role para baixo até a categoria <strong>Conexões</strong> e marque apenas <strong>"Seguidores e seguindo"</strong>.<br>
+            5. Avance e configure EXATAMENTE assim:
         </div>
 
-        <button onclick="processarArquivos()" id="btnAnalisar">Analisar Conexões</button>
+        <div class="config-card">
+            <div class="config-item">
+                <span class="config-label">Destino:</span>
+                <span class="config-value">Baixar no dispositivo</span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">Intervalo de datas:</span>
+                <span class="config-value">Desde o início</span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">Formato:</span>
+                <span class="config-value" style="color:#E1306C">JSON (Não HTML)</span>
+            </div>
+        </div>
+
+        <a href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" class="btn-insta">↗️ Abrir Instagram e Solicitar</a>
     </div>
 
-    <div id="debugArea" class="debug-box"></div>
+    <div class="step">
+        <div class="step-title"><span class="step-number">2</span> Envie o arquivo recebido</div>
+        <p style="font-size: 0.9em; color: #555; margin-bottom: 15px;">O Instagram te enviará um email. Baixe o arquivo (ZIP) e envie ele aqui <strong>sem descompactar</strong>.</p>
+        
+        <div class="upload-zone">
+            <p>📂 Toque aqui para enviar o arquivo .ZIP</p>
+            <input type="file" id="zipFile" accept=".zip" onchange="handleZipUpload(this)">
+        </div>
+        <div id="loading" class="loading">🔍 Lendo arquivo ZIP...</div>
+        <div id="errorMsg" class="error-msg"></div>
+    </div>
 
     <div id="results">
-        <div class="stat-box">
-            <div class="stat">
-                <div class="stat-number" id="countFollowers">0</div>
-                <div>Te Seguem</div>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-val" id="numFollowers">-</div>
+                <div class="stat-label">Te Seguem</div>
             </div>
-            <div class="stat">
-                <div class="stat-number" id="countFollowing">0</div>
-                <div>Você Segue</div>
+            <div class="stat-card">
+                <div class="stat-val" id="numFollowing">-</div>
+                <div class="stat-label">Você Segue</div>
             </div>
-            <div class="stat">
-                <div class="stat-number" id="countNotBack">0</div>
-                <div>Não seguem de volta</div>
+            <div class="stat-card">
+                <div class="stat-val" id="numNotBack">-</div>
+                <div class="stat-label">Não Retornam</div>
             </div>
         </div>
 
-        <h3>🚫 Quem não te segue de volta:</h3>
+        <h3 style="text-align: left; font-size: 1.1em; color: #333;">🚫 Quem não te segue de volta:</h3>
+        <p style="font-size: 0.8em; color: #888; margin-bottom: 10px;">Clique em "Ver Perfil" para conferir.</p>
         <ul id="listNotBack"></ul>
     </div>
 </div>
 
 <script>
-    function updateStatus(input, statusId) {
-        const statusElement = document.getElementById(statusId);
-        if (input.files && input.files[0]) {
-            statusElement.innerText = "✅ " + input.files[0].name;
-            statusElement.style.display = "block";
-        }
-    }
-
-    async function lerJson(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = event => {
-                try {
-                    resolve(JSON.parse(event.target.result));
-                } catch (e) {
-                    reject("Erro ao ler JSON: " + e.message);
-                }
-            };
-            reader.onerror = error => reject(error);
-            reader.readAsText(file);
-        });
-    }
-
-    function logDebug(msg) {
-        const debug = document.getElementById('debugArea');
-        debug.style.display = 'block';
-        debug.innerText += msg + "\n";
-        console.log(msg);
-    }
+    // --- Lógica JSZip e Processamento ---
 
     function encontrarListaUsuarios(data) {
         if (Array.isArray(data)) return data;
@@ -124,60 +136,59 @@
         return [];
     }
 
-    function extrairUsuarios(data, nomeArquivo) {
+    function extrairUsuarios(data) {
         const users = new Set();
         const lista = encontrarListaUsuarios(data);
-
-        logDebug(`[${nomeArquivo}] Itens brutos encontrados: ${lista.length}`);
-
+        
         lista.forEach(item => {
             let username = null;
-
-            // Lógica de Prioridade "Cascata"
-            
-            // 1. Tenta pegar pelo value dentro do array (Padrão Followers)
+            // Tenta achar o username nas estruturas conhecidas
             if (item.string_list_data && item.string_list_data[0] && item.string_list_data[0].value) {
                 username = item.string_list_data[0].value;
-            }
-            
-            // 2. SE falhou acima, tenta pegar pelo Title (Padrão Following que vimos no debug)
-            if (!username && item.title) {
+            } else if (item.title) {
                 username = item.title;
-            }
-            
-            // 3. SE falhou, tenta value direto
-            if (!username && item.value) {
+            } else if (item.value) {
                 username = item.value;
             }
-
-            if (username) {
-                users.add(username.toLowerCase());
-            }
+            if (username) users.add(username.toLowerCase());
         });
-
         return users;
     }
 
-    async function processarArquivos() {
-        const followersInput = document.getElementById('followersFile');
-        const followingInput = document.getElementById('followingFile');
-        const debugArea = document.getElementById('debugArea');
-        
-        debugArea.innerText = "INICIANDO...\n";
+    async function handleZipUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
 
-        if (!followersInput.files[0] || !followingInput.files[0]) {
-            alert("⚠️ Selecione os dois arquivos JSON.");
-            return;
-        }
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('errorMsg').style.display = 'none';
+        document.getElementById('results').style.display = 'none';
 
         try {
-            const followersData = await lerJson(followersInput.files[0]);
-            const followingData = await lerJson(followingInput.files[0]);
+            const zip = new JSZip();
+            const zipContent = await zip.loadAsync(file);
+            
+            let followersContent = null;
+            let followingContent = null;
 
-            const seguidores = extrairUsuarios(followersData, 'SEGUIDORES');
-            const seguindo = extrairUsuarios(followingData, 'SEGUINDO');
+            // Busca flexível dentro do ZIP
+            for (const [filename, fileData] of Object.entries(zipContent.files)) {
+                if (filename.includes('followers_1.json') || filename.includes('followers.json')) {
+                    followersContent = await fileData.async('string');
+                }
+                if (filename.includes('following.json')) {
+                    followingContent = await fileData.async('string');
+                }
+            }
 
-            logDebug(`[FINAL] Extraídos: ${seguidores.size} seguidores / ${seguindo.size} seguindo.`);
+            if (!followersContent || !followingContent) {
+                throw new Error("Arquivos não encontrados no ZIP. Certifique-se de ter escolhido formato JSON no Instagram.");
+            }
+
+            const followersJson = JSON.parse(followersContent);
+            const followingJson = JSON.parse(followingContent);
+
+            const seguidores = extrairUsuarios(followersJson);
+            const seguindo = extrairUsuarios(followingJson);
 
             const naoSeguemDeVolta = [];
             seguindo.forEach(user => {
@@ -186,27 +197,27 @@
                 }
             });
 
-            document.getElementById('countFollowers').textContent = seguidores.size;
-            document.getElementById('countFollowing').textContent = seguindo.size;
-            document.getElementById('countNotBack').textContent = naoSeguemDeVolta.length;
+            // Atualiza Interface
+            document.getElementById('numFollowers').innerText = seguidores.size;
+            document.getElementById('numFollowing').innerText = seguindo.size;
+            document.getElementById('numNotBack').innerText = naoSeguemDeVolta.length;
 
             const ul = document.getElementById('listNotBack');
             ul.innerHTML = '';
-            
             naoSeguemDeVolta.sort().forEach(user => {
                 const li = document.createElement('li');
-                li.innerHTML = `
-                    <strong>${user}</strong>
-                    <a href="https://instagram.com/${user}" target="_blank">Ver Perfil</a>
-                `;
+                li.innerHTML = `<strong>${user}</strong><a href="https://instagram.com/${user}" target="_blank" class="profile-link">Ver Perfil</a>`;
                 ul.appendChild(li);
             });
 
+            document.getElementById('loading').style.display = 'none';
             document.getElementById('results').style.display = 'block';
 
-        } catch (error) {
-            console.error(error);
-            alert("Erro: " + error.message);
+        } catch (err) {
+            console.error(err);
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('errorMsg').innerText = "Erro: " + err.message;
+            document.getElementById('errorMsg').style.display = 'block';
         }
     }
 </script>
